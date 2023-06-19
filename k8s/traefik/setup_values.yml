@@ -1,0 +1,22 @@
+---
+additionalArguments:
+  - "--certificatesresolvers.le.acme.email="
+  - "--certificatesresolvers.le.acme.caServer=https://acme-v02.api.letsencrypt.org/directory"
+  - "--certificatesresolvers.le.acme.httpChallenge.entryPoint=web"
+  - "--certificatesresolvers.le.acme.storage=/tmp/acme.json"
+
+logs:
+  general:
+    level: DEBUG
+
+ports:
+  web:
+    redirectTo: websecure
+  websecure:
+    tls:
+      enabled: true
+      certResolver: le
+
+ingressClass:
+  enabled: true
+  isDefaultClass: true

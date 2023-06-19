@@ -1,0 +1,25 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-frontend
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Release.Name }}-frontend
+    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: dumplings-store
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    env: "{{ .Values.global.environment }}" 
+spec:
+  rules:
+    - host: {{ .Values.ingress.fqdn | quote }}
+      http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ .Release.Name }}-frontend
+              port:
+                number: {{ .Values.ingress.port }}

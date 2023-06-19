@@ -1,0 +1,47 @@
+image:
+  name: hashicorp/terraform:light
+  entrypoint: [""]
+
+variables:
+  YC_SERVICE_ACCOUNT_KEY_FILE: /tmp/sa-key.json
+
+before_script:
+  - |
+    cat <<EOF >> ~/.terraformrc
+    provider_installation {
+      network_mirror {
+        url = "https://terraform-mirror.yandexcloud.net/"
+        include = ["registry.terraform.io/*/*"]
+      }
+      direct {
+        exclude = ["registry.terraform.io/*/*"]
+      }
+    }
+    EOF
+  - cd terraform
+  - terraform init
+  - echo $YC_KEY > /tmp/sa-key.json
+
+stages:
+  - validate
+  - plan
+  - apply
+
+validate:
+  stage: validate
+  script:
+    - terraform validate
+
+plan:
+  stage: plan
+  script:
+    - terraform plan -out="planfile"
+  artifacts:
+    paths:
+      - terraform/planfile
+
+apply:
+  stage: apply
+  script:
+    - terraform apply -auto-approve "planfile"
+  when: manual

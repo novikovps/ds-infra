@@ -1,0 +1,51 @@
+image:
+  name: dtzar/helm-kubectl:3.12.0
+
+variables:
+  MAJOR: "0"
+  MINOR: "0"
+  ID: $CI_PIPELINE_ID
+  VERSION: $MAJOR.$MINOR.$ID
+
+before_script:
+  - cd ds-chart
+  - >
+    helm repo add nexus $NEXUS_REPOSITORY
+    --username $NEXUS_USERNAME 
+    --password $NEXUS_PASSWORD
+    --insecure-skip-tls-verify
+  - helm repo update
+
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  script:
+    - helm lint
+    - helm package . --version $VERSION
+    - >
+      curl -u $NEXUS_USERNAME:$NEXUS_PASSWORD $NEXUS_REPOSITORY --insecure --upload-file dumplings-store-$VERSION.tgz
+
+deploy:
+  stage: deploy
+  script:
+    - kubectl config set-cluster k8s --server="$KUBE_URL" --insecure-skip-tls-verify=true
+    - kubectl config set-credentials admin --token="$KUBE_TOKEN"
+    - kubectl config set-context default --cluster=k8s --user=admin
+    - kubectl config use-context default
+    - >
+      helm upgrade --install dumplings-store
+      nexus/dumplings-store --version $VERSION 
+      --set global.dockerconfigjson=$DS_CHART_DOCKER_JSON
+      --set ds-backend.image=$DS_BACKEND_IMAGE
+      --set ds-frontend.image=$DS_FRONTEND_IMAGE
+      --set ds-frontend.ingress.fqdn=$DS_FQDN
+      --atomic --timeout 15m 
+      --insecure-skip-tls-verify
+      -n dumplings-store --create-namespace
+    - rm ~/.kube/config
+  rules:
+    - if: $CI_PIPELINE_SOURCE != "trigger"
+      when: manual

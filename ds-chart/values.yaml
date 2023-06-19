@@ -1,0 +1,23 @@
+---
+global:
+  dockerconfigjson:
+  environment: production
+
+ds-backend:
+  replicas: 2
+  image: 
+  revisionHistoryLimit: 15
+  rollingUpdate:
+    maxUnavailable: 50%
+    maxSurge: 20%
+  prometheusPath: /metrics
+  prometheusPort: "8081"
+  prometheusScrape: "true"
+
+ds-frontend:
+  replicas: 1
+  image: 
+  revisionHistoryLimit: 15
+  ingress:
+    fqdn: 
+    port: 80

@@ -1,0 +1,56 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-backend
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Release.Name }}-backend
+    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/part-of: dumplings-store
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    env: "{{ .Values.global.environment }}" 
+spec:
+  replicas: {{ .Values.replicas }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+{{ toYaml .Values.rollingUpdate | indent 6 }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-backend
+      app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+      helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+      env: "{{ .Values.global.environment }}"
+  template:
+    metadata:
+      namespace: {{ .Release.Namespace }}
+      labels:
+        app: {{ .Release.Name }}-backend
+        app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+        helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        env: "{{ .Values.global.environment }}"
+      annotations:
+        prometheus.io/path: "{{ .Values.prometheusPath }}"
+        prometheus.io/port: "{{ .Values.prometheusPort }}"
+        prometheus.io/scrape: "{{ .Values.prometheusScrape }}"      
+    spec:
+      containers:
+        - name: {{ .Release.Name }}-backend
+          image: {{ .Values.image }}:{{ .Chart.AppVersion }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          ports:
+            - name: ds-backend
+              containerPort: 8081
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 1
+            failureThreshold: 3
+      imagePullSecrets:
+        - name: docker-config-secret

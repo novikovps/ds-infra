@@ -1,0 +1,14 @@
+---
+apiVersion: v2
+type: application
+name: dumplings-store
+description: Dumplings Store Helm Chart
+version: 0.1.0
+
+appVersion: latest
+
+dependencies:
+  - name: ds-backend
+    version: 0.1.0
+  - name: ds-frontend
+    version: 0.1.0

@@ -1,0 +1,11 @@
+grafana:
+  ingress:
+    enabled: true
+    path: /
+  additionalDataSources:
+    - name: loki
+      access: proxy
+      editable: true
+      basicAuth: false
+      type: loki
+      url: http://loki.loki:3100

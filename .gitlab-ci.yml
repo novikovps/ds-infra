@@ -1,0 +1,33 @@
+---
+stages:
+  - module-pipelines
+
+terraform:
+  stage: module-pipelines
+  trigger:
+    include:
+      - "/terraform/.gitlab-ci.yml"
+    strategy: depend
+  rules:
+    - if: $RUN_PIPELINE == "terraform"
+    - changes:
+        - "terraform/*.md"
+        - "terraform/.gitlab-ci.yml"
+      when: never
+    - changes:
+      - terraform/**/*
+
+ds-chart:
+  stage: module-pipelines
+  trigger:
+    include:
+      - "/ds-chart/.gitlab-ci.yml"
+    strategy: depend
+  rules:
+    - if: $RUN_PIPELINE == "ds-chart"
+    - changes:
+        - "ds-chart/*.md"
+        - "ds-chart/.gitlab-ci.yml"
+      when: never
+    - changes:
+      - ds-chart/**/*

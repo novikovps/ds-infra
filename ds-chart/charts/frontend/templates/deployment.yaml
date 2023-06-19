@@ -1,0 +1,54 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-frontend
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Release.Name }}-frontend
+    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: dumplings-store
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    env: "{{ .Values.global.environment }}"
+spec:
+  replicas: {{ .Values.replicas }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-frontend
+      app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+      helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+      env: "{{ .Values.global.environment }}"
+  template:
+    metadata:
+      namespace: {{ .Release.Namespace }}
+      labels:
+        app: {{ .Release.Name }}-frontend
+        app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+        helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        env: "{{ .Values.global.environment }}"
+    spec:
+      containers:
+        - name: {{ .Release.Name }}-frontend
+          image: {{ .Values.image }}:{{ .Chart.AppVersion }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          volumeMounts:
+            - name: {{ .Release.Name }}-nginx-conf
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+          ports:
+            - name: ds-frontend
+              containerPort: 80
+      volumes:
+        - name: {{ .Release.Name }}-nginx-conf
+          configMap:
+            name: {{ .Release.Name }}-nginx-conf
+            items:
+              - key: nginx.conf
+                path: nginx.conf
+      imagePullSecrets:
+        - name: docker-config-secret
